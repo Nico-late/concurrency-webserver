@@ -305,9 +305,9 @@ the following files:
 - [`spin.c`](/src/spin.c): A simple CGI program. Basically, it spins for a fixed amount
   of time, which you may useful in testing various aspects of your server.  
 - [`Makefile`](/src/Makefile): We also provide you with a sample Makefile that creates
-  `wserver`, `wclient`, and `spin.cgi`. You can type make to create all of
-  these programs. You can type make clean to remove the object files and the
-  executables. You can type make server to create just the server program,
+  `wserver`, `wclient`, and `spin.cgi`. You can type **`make`** to create all of
+  these programs. You can type **`make clean`** to remove the object files and the
+  executables. You can type ``make server`` to create just the server program,
   etc. As you create new files, you will need to add them to the Makefile.
 
 The best way to learn about the code is to compile it and run it. Run the
