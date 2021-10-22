@@ -1,18 +1,19 @@
 #include <stdio.h>
 #include "request.h"
 #include "io_helper.h"
+#include <pthread.h>
 
 char default_root[] = ".";
 
 //
-// ./wserver [-d <basedir>] [-p <portnum>] 
+// ./wserver [-d <basedir>] [-p <portnum>] [-t <threads>] [-b <buffers>]
 // 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[], pthread_t argt, char *argb[] ) {
     int c;
     char *root_dir = default_root;
     int port = 10000;
     
-    while ((c = getopt(argc, argv, "d:p:")) != -1)
+    while ((c = getopt(argc, argv,argt,argb, "d:p:t:b:")) != -1)
 	switch (c) {
 	case 'd':
 	    root_dir = optarg;
@@ -21,7 +22,7 @@ int main(int argc, char *argv[]) {
 	    port = atoi(optarg);
 	    break;
 	default:
-	    fprintf(stderr, "usage: wserver [-d basedir] [-p port]\n");
+	    fprintf(stderr, "usage: wserver [-d basedir] [-p port] [-t threads] [-b buffers]\n");
 	    exit(1);
 	}
 
