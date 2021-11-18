@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in client_addr;
 	int client_len = sizeof(client_addr);
 	int conn_fd = accept_or_die(listen_fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
-	request_handle(conn_fd);
+	request_handle(conn_fd, threads, buffers);
 	close_or_die(conn_fd);
     }
     return 0;

@@ -1,5 +1,6 @@
 #include "io_helper.h"
 #include "request.h"
+#include <pthread.h>
 
 //
 // Some of this code stolen from Bryant/O'Halloran
@@ -7,6 +8,12 @@
 //
 
 #define MAXBUF (8192)
+
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+//pthread_cond_t empty =
+PTHREAD_COND_INITIALIZER;
+//pthread_cond_t fill =
+PTHREAD_COND_INITIALIZER;
 
 void request_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) {
     char buf[MAXBUF], body[MAXBUF];
@@ -141,8 +148,63 @@ void request_serve_static(int fd, char *filename, int filesize) {
     munmap_or_die(srcp, filesize);
 }
 
+
+"""Note that the master thread and the worker threads are in a producer-consumer
+relationship and require that their accesses to the shared buffer be
+synchronized. Specifically, the master thread must block and wait if the
+buffer is full; a worker thread must wait if the buffer is empty. In this
+project, you are required to use condition variables. Note: if your
+implementation performs any busy-waiting (or spin-waiting) instead, you will
+be penalized (i.e., do not do that!)."""
+
+// les deux fonctions suivantes doivent avoir accès au buffer de descriptor. A AJOUTER
+
+void *thread_producer(void *arg) {
+    //Specifically, the master thread must block and wait if thebuffer is full
+
+    printf("%s\n", (char *)arg);
+}
+
+void *worker_thread_consumer(void *arg) {
+    //a worker thread must wait if the buffer is empty.
+    printf("%s\n", (char *)arg);
+
+    pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
+    return NULL;
+
+}
+
 // handle a request
-void request_handle(int fd) {
+void request_handle(int fd, int threads, int buffers) {
+    // int threads correspond au nombre de threads maximal autorisé
+    // int buffers correspond au buffer qui recevra les descripteurs de connexion
+
+    //master thread
+    pthread_t master_thread;
+
+    //pool de thread
+    pthread_t pool[threads];
+
+    //cree master thread
+    pthread_create(&master_thread, NULL, thread_producer, NULL);
+
+    int i=0;
+
+    while (i<threads) 
+    {
+        if( pthread_create(&pool[i], NULL, worker_thread_consumer, NULL) != 0 )
+           printf("Failed to create thread\n");
+    i++;
+    }
+
+    // il s'agit du buffer de descriptor (quand il ny a plus de threads accessibles)
+    int buffer_descriptor[buffers];
+    """ Note that the existing web server has a
+    single thread that accepts a connection and then immediately handles the
+    connection; in your web server, this thread should place the connection
+    descriptor into a fixed-size buffer and return to accepting more connections."""
+    // --> il faudrait donc ajouter fd à chaque nouvelle request --> on est pas au bon endroit?
+
     int is_static;
     struct stat sbuf;
     char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];

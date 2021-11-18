@@ -61,7 +61,7 @@ void client_print(int fd) {
     // Read and display the HTTP Body 
     n = readline_or_die(fd, buf, MAXBUF);
     while (n > 0) {
-	printf("%s", buf);
+	printf("position 0: %s", buf);
 	n = readline_or_die(fd, buf, MAXBUF);
     }
 }
