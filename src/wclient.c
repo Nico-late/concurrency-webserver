@@ -20,8 +20,24 @@
 //
 
 #include "io_helper.h"
+#include <pthread.h>
 
 #define MAXBUF (8192)
+
+void *client_thread(char *argv[]) {
+    //a worker thread must wait if the buffer is empty.
+    char host = argv[1];
+    int port = atoi(argv[2]);
+    char filename = argv[3];
+
+    /* Open a single connection to the specified host and port */
+    int clientfd = open_client_fd_or_die(host, port);
+    
+    client_send(clientfd, filename);
+    client_print(clientfd);
+    
+    close_or_die(clientfd);
+}
 
 //
 // Send an HTTP request for the specified file 
@@ -76,17 +92,15 @@ int main(int argc, char *argv[]) {
 	exit(1);
     }
     
-    host = argv[1];
-    port = atoi(argv[2]);
-    filename = argv[3];
-    
-    /* Open a single connection to the specified host and port */
-    clientfd = open_client_fd_or_die(host, port);
-    
-    client_send(clientfd, filename);
-    client_print(clientfd);
-    
-    close_or_die(clientfd);
+    int threads = 3;
+
+    pthread_t pool[threads];
+    int i = 0;
+
+    while(i<threads){
+        if(pthread_create(&pool[i++], NULL, client_thread, argv) != 0 )
+            printf("Failed to create client thread\n");
+    }
     
     exit(0);
 }
