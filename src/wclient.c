@@ -24,11 +24,19 @@
 
 #define MAXBUF (8192)
 
+pthread_mutex_t lock_client = PTHREAD_MUTEX_INITIALIZER;
+
 void *client_thread(char *argv[]) {
     //a worker thread must wait if the buffer is empty.
-    char host = argv[1];
+    printf("Thread opened\n");
+    pthread_mutex_lock(&lock_client); //par défaut le thread crée est blocké
+    char *host = argv[1];
     int port = atoi(argv[2]);
-    char filename = argv[3];
+    char *filename = argv[3];
+
+    printf(host);
+    printf(port);
+    printf(filename);
 
     /* Open a single connection to the specified host and port */
     int clientfd = open_client_fd_or_die(host, port);
@@ -37,6 +45,8 @@ void *client_thread(char *argv[]) {
     client_print(clientfd);
     
     close_or_die(clientfd);
+    pthread_mutex_unlock(&lock_client);
+    pthread_exit(NULL);
 }
 
 //
@@ -83,24 +93,20 @@ void client_print(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-    char *host, *filename;
-    int port;
-    int clientfd;
     
     if (argc != 4) {
 	fprintf(stderr, "Usage: %s <host> <port> <filename>\n", argv[0]);
 	exit(1);
     }
     
-    int threads = 3;
+    int threads = 4;
 
     pthread_t pool[threads];
     int i = 0;
 
     while(i<threads){
-        if(pthread_create(&pool[i++], NULL, client_thread, argv) != 0 )
+        if(pthread_create(&pool[i], NULL, client_thread, argv) != 0 )
             printf("Failed to create client thread\n");
+        i++;
     }
-    
-    exit(0);
 }

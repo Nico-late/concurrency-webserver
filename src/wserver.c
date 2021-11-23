@@ -77,17 +77,23 @@ int main(int argc, char *argv[]) {
 		struct sockaddr_in client_addr;
 		int client_len = sizeof(client_addr);
 		int conn_fd = accept_or_die(listen_fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
-
 		if(pthread_create(&pool[i++], NULL, server_thread, conn_fd) != 0 ){
 			printf("Failed to create thread\n");
 		}
+
+		// Solution trouvée sur internet pour vérifier que tous les threads
+		// dans la pool sont fermés avant de relancer des threads...
+		// Mais ça me parait pas optimal
+		if( i >= threads)
+        {
+          i = 0;
+          while(i < threads)
+          {
+            pthread_join(pool[i++],NULL);
+          }
+          i = 0;
+        }
 	}
 
     return 0;
 }
-
-
-    
-
-
- 
