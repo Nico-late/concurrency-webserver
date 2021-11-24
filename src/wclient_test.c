@@ -24,12 +24,6 @@
 
 #define MAXBUF (8192)
 
-struct thread_info { /* Used as argument to client_thread() */
-    char *host;
-    char *filename;
-    int port;   
-};
-
 //
 // Send an HTTP request for the specified file 
 //
@@ -73,61 +67,33 @@ void client_print(int fd) {
     }
 }
     
-void *client_thread(void *arg) {
+void *client_thread(void *argv[]) {
     //a worker thread must wait if the buffer is empty.
     printf("Thread opened\n");
-    struct thread_info *tinfo = arg; 
-
-    char *host = tinfo->host;
-    int port = tinfo->port ;
-    char *filename =  tinfo->filename;
     
-    //printf("wclient 1 host %s, port %d, filename %s \n", host, port,filename);
-
-    int clientfd = open_client_fd_or_die(host, port);
-
-    client_send(clientfd, filename);
-    client_print(clientfd);
-    close_or_die(clientfd);
-
-    exit(0);
-
+    return 0;
 }
 
 
 int main(int argc, char *argv[]) {
-   
-    struct thread_info tinfo;
-    printf("Beginning \n");
+    char *host, *filename;
+    int port;
+    //int clientfd;
+    
     if (argc != 4) {
 	fprintf(stderr, "Usage: %s <host> <port> <filename>\n", argv[0]);
 	exit(1);
     }
-     
-    tinfo.host= argv[1];
-    tinfo.port= atoi(argv[2]);
-    tinfo.filename= argv[3];
     
-    //printf("00 host %s, port %d, filename %s \n", tinfo.host, tinfo.port, tinfo.filename);
+    host = argv[1];
+    port = atoi(argv[2]);
+    filename = argv[3];
+    printf("00 host %s, port %d, filename %s \n", host, port, filename);
     /* Open a single connection to the specified host and port */
-    
-    int nb_threads = 40;
-
-    pthread_t pool[nb_threads];
-    //pthread_create(&pool[i], NULL, client_thread, &(argv[1]));
-    //pthread_join(pool[i], NULL);
-    for( int i=0; i<nb_threads; i++){
-        printf("10 %d \n",i);
-        if(pthread_create(&pool[i], NULL, client_thread, &(tinfo)) != 0 )
-            printf("Failed to create client thread\n");
-        printf("11 %d \n",i);
-        pthread_join(pool[i], NULL);
-        printf("12 %d \n",i);
-        
-    }
-
-
-    //printf("03 host %s, port %d, filename %s \n", host, port, filename);
+    pthread_t p0;
+    pthread_create(&p0, NULL, client_thread, NULL);
+    pthread_join( p0, NULL);
+    printf("01 host %s, port %d, filename %s \n", host, port, filename);
 
     
     

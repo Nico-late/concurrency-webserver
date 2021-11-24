@@ -1,8 +1,13 @@
 <html>
-<h1>
+<h1 id="demo">
 CECI EST UN TEST
 <script type="text/javascript">
-	setTimeout(function(){ console.log("Hello"); }, 10000);
+	setTimeout(myFunction, 3000);
+
+	function myFunction() {
+  		document.getElementById("demo").innerHTML = "Test réussi !!";
+  	}
+  	
 </script>
 </h1>
 </html>
