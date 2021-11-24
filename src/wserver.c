@@ -34,38 +34,37 @@ void put_fd (int fd) {
 	printf("Inside put_fd & count= , %d, fd = %d\n",shared.count+1, fd);
 	shared.buff[shared.count]=fd;
 	shared.count ++;
-	if (shared.count == shared.buff_size) {
+	if (shared.count == 0) {
 		printf("inside put_fd & signal need to empty\n");
-		pthread_cond_signal(&needToEmpty);
+		pthread_cond_signal(&needToFill);
 	}
 	else {
 		printf("inside put_fd & signal need to fill\n");
-		pthread_cond_signal(&needToFill);
+		pthread_cond_signal(&needToEmpty);
 	}
 }
 
 void *worker_thread_consumer(void *arg) {
-	int nb = *((int *)arg);
-	printf("Inside worker_thread_consumer number %d\n", nb); 
-	pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
-
-	while (shared.count == 0) {
+	while (1){
+		int nb = *((int *)arg);
+		printf("Inside worker_thread_consumer number %d\n", nb); 
+		pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
 		printf("Inside worker_thread_consumer & inside while avant cond %d \n", nb);
-		pthread_cond_wait (&needToFill, &lock);
+		pthread_cond_wait (&needToEmpty, &lock);
 		printf("Inside worker_thread_consumer & inside while après cond %d \n", nb);
+		int fd = get_fd();
+		request_handle(fd);
+		close_or_die(fd);
+		pthread_mutex_unlock(&lock);
 	}
-	int fd = get_fd();
-    request_handle(fd);
-    close_or_die(fd);
-	pthread_mutex_unlock(&lock);
-    pthread_exit(NULL);
 }
+
 void master_thread_producer (void * arg) {
 	
 	int fd = *((int *)arg);
 	printf("Inside master_thread_producer &  fd= %d\n", fd);
 	pthread_mutex_lock(&lock);
-	while (shared.count == shared.buff_size) {
+	if (shared.count == shared.buff_size) {
 		printf("Inside master_thread_producer & inside while avant cond\n");
 		pthread_cond_wait(&needToFill, &lock);
 		printf("Inside master_thread_producer & inside while apres cond\n");
@@ -91,7 +90,7 @@ int main(int argc, char *argv[]) {
     char *root_dir = default_root;
     int port = 10000;
 	int threads = 10;
-	int buffers = 1;
+	int buffers = 40;
     
     while ((c = getopt(argc, argv, "d:p:t:b:")) != -1)
 	switch (c) {
@@ -139,7 +138,6 @@ int main(int argc, char *argv[]) {
            printf("Failed to create thread\n");
     }
 
-
     // now, get to work
     int listen_fd = open_listen_fd_or_die(port);
 
@@ -149,6 +147,7 @@ int main(int argc, char *argv[]) {
 		int client_len = sizeof(client_addr);
 		printf("1 \n");
 		int conn_fd = accept_or_die(listen_fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
+		printf("conn_fd = %d\n",conn_fd);
 		master_thread_producer(&conn_fd);		
 		printf("2 \n");
 	}

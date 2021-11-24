@@ -99,8 +99,8 @@ int main(int argc, char *argv[]) {
    
     struct thread_info tinfo;
     printf("Beginning \n");
-    if (argc != 4) {
-	fprintf(stderr, "Usage: %s <host> <port> <filename>\n", argv[0]);
+    if (argc != 5) {
+	fprintf(stderr, "Usage: %s <host> <port> <filename> <threads>\n", argv[0]);
 	exit(1);
     }
      
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     //printf("00 host %s, port %d, filename %s \n", tinfo.host, tinfo.port, tinfo.filename);
     /* Open a single connection to the specified host and port */
     
-    int nb_threads = 40;
+    int nb_threads = atoi(argv[4]);
 
     pthread_t pool[nb_threads];
     //pthread_create(&pool[i], NULL, client_thread, &(argv[1]));
