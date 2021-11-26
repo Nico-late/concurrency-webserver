@@ -21,13 +21,15 @@
 
 #include "io_helper.h"
 #include <pthread.h>
+#include "spin.c"
 
 #define MAXBUF (8192)
 
 struct thread_info { /* Used as argument to client_thread() */
     char *host;
     char *filename;
-    int port;   
+    int port;
+    int nb_thread;
 };
 
 //
@@ -72,26 +74,27 @@ void client_print(int fd) {
 	n = readline_or_die(fd, buf, MAXBUF);
     }
 }
+
+pthread_mutex_t lock_client = PTHREAD_MUTEX_INITIALIZER;
     
 void *client_thread(void *arg) {
-    //a worker thread must wait if the buffer is empty.
-    printf("Thread opened\n");
-    struct thread_info *tinfo = arg; 
+    pthread_mutex_lock(&lock_client);
 
+    struct thread_info *tinfo = arg; 
     char *host = tinfo->host;
     int port = tinfo->port ;
     char *filename =  tinfo->filename;
-    
+    int nb_thread = tinfo->nb_thread;
+    printf("Thread number %d opened\n", nb_thread);
     //printf("wclient 1 host %s, port %d, filename %s \n", host, port,filename);
 
     int clientfd = open_client_fd_or_die(host, port);
 
     client_send(clientfd, filename);
     client_print(clientfd);
+    //spin(2);
     close_or_die(clientfd);
-
-    exit(0);
-
+    pthread_mutex_unlock(&lock_client);
 }
 
 
@@ -108,28 +111,17 @@ int main(int argc, char *argv[]) {
     tinfo.port= atoi(argv[2]);
     tinfo.filename= argv[3];
     
-    //printf("00 host %s, port %d, filename %s \n", tinfo.host, tinfo.port, tinfo.filename);
     /* Open a single connection to the specified host and port */
     
     int nb_threads = atoi(argv[4]);
 
     pthread_t pool[nb_threads];
-    //pthread_create(&pool[i], NULL, client_thread, &(argv[1]));
-    //pthread_join(pool[i], NULL);
+
     for( int i=0; i<nb_threads; i++){
-        printf("10 %d \n",i);
+        tinfo.nb_thread=i;
         if(pthread_create(&pool[i], NULL, client_thread, &(tinfo)) != 0 )
             printf("Failed to create client thread\n");
-        printf("11 %d \n",i);
-        pthread_join(pool[i], NULL);
-        printf("12 %d \n",i);
-        
+        pthread_join(pool[i], NULL);        
     }
-
-
-    //printf("03 host %s, port %d, filename %s \n", host, port, filename);
-
-    
-    
     exit(0);
 }
