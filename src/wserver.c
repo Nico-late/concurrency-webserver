@@ -2,7 +2,6 @@
 #include "request.h"
 #include "io_helper.h"
 #include <pthread.h>
-#include "spin.c"
 
 char default_root[] = ".";
 
@@ -11,11 +10,12 @@ pthread_mutex_t master_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t needToEmpty = PTHREAD_COND_INITIALIZER;
 pthread_cond_t needToFill = PTHREAD_COND_INITIALIZER;
 
+
 struct {
 	int count;
 	int buff_size;
 	int nb_threads;
-	int buff[];
+	int* buff;
 } shared = {0};
 
 int get_fd () {
@@ -29,9 +29,8 @@ int get_fd () {
 void put_fd (int fd) {
 	shared.buff[shared.count]=fd;
 	shared.count ++;
-
-	pthread_cond_signal(&needToEmpty);
-	
+	if (shared.count==1)
+		pthread_cond_signal(&needToEmpty);
 }
 
 void *worker_thread_consumer(void *arg) {
@@ -39,19 +38,20 @@ void *worker_thread_consumer(void *arg) {
 		int nb = *((int *)arg);
 		//printf("inside worker thread number %d \n",nb);
 		pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
-		pthread_cond_wait (&needToEmpty, &lock);
+		if (shared.count==0)
+			pthread_cond_wait (&needToEmpty, &lock);
 		int fd = get_fd();
+		pthread_mutex_unlock(&lock);
 		request_handle(fd);
 		close_or_die(fd);
-
-		pthread_mutex_unlock(&lock);
-		
+		sleep(1);
 	}
 }
 
 void master_thread_producer (int fd) {
 	pthread_mutex_lock(&lock);
 	while (shared.count == shared.buff_size) {
+		printf("############# BUFFER FULL #############");
 		pthread_cond_wait(&needToFill, &lock);
 	}
 	put_fd(fd);
@@ -110,6 +110,7 @@ int main(int argc, char *argv[]) {
 	//extern int buff[buffers];
 
 	//fill the structure with infos
+	shared.buff = malloc( sizeof(int)*buffers);
 	shared.buff_size = buffers;
 	shared.nb_threads = threads;
   

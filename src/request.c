@@ -9,6 +9,8 @@
 
 #define MAXBUF (8192)
 
+int counter = 0;
+
 void request_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) {
     char buf[MAXBUF], body[MAXBUF];
     
@@ -142,9 +144,17 @@ void request_serve_static(int fd, char *filename, int filesize) {
     munmap_or_die(srcp, filesize);
 }
 
+int check_constraint_file(char uri[]){
+    for (int i=0; i<MAXBUF; i++){
+        if (uri[i]=='.' && uri[i+1]=='.'){
+            return 1;
+        }
+    } 
+    return 0;
+}
+
 // handle a request
 void request_handle(int fd) {
-    
     int is_static;
     struct stat sbuf;
     char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
@@ -152,7 +162,8 @@ void request_handle(int fd) {
     
     readline_or_die(fd, buf, MAXBUF);
     sscanf(buf, "%s %s %s", method, uri, version);
-    printf("method:%s uri:%s version:%s\n", method, uri, version);
+    counter++;
+    printf("method:%s uri:%s version:%s counter:%d\n", method, uri, version, counter);
     
     if (strcasecmp(method, "GET")) {
 	request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
@@ -165,9 +176,8 @@ void request_handle(int fd) {
 	request_error(fd, filename, "404", "Not found", "server could not find this file");
 	return;
     }
-    
     if (is_static) {
-	if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {
+	if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode) || check_constraint_file(uri)) {
 	    request_error(fd, filename, "403", "Forbidden", "server could not read this file");
 	    return;
 	}

@@ -21,7 +21,6 @@
 
 #include "io_helper.h"
 #include <pthread.h>
-#include "spin.c"
 
 #define MAXBUF (8192)
 
@@ -86,7 +85,6 @@ void *client_thread(void *arg) {
     int nb_thread = tinfo->nb_thread;
     printf("Thread number %d opened\n", nb_thread);
     //printf("wclient 1 host %s, port %d, filename %s \n", host, port,filename);
-    spin(1);
     int clientfd = open_client_fd_or_die(host, port);
     //pthread_mutex_unlock(&lock_client);
     client_send(clientfd, filename);
@@ -123,8 +121,12 @@ int main(int argc, char *argv[]) {
             printf("Failed to create client thread\n");
                
     }
+    printf("Before JOIN\n");
     for( int i=0; i<nb_threads; i++){
+        printf("Before JOIN %d\n",i);
         pthread_join(pool[i], NULL); 
+        printf("After JOIN %d\n",i);
     }
+    printf("After JOIN\n");
     exit(0);
 }
