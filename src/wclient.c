@@ -78,8 +78,7 @@ void client_print(int fd) {
 pthread_mutex_t lock_client = PTHREAD_MUTEX_INITIALIZER;
     
 void *client_thread(void *arg) {
-    pthread_mutex_lock(&lock_client);
-
+    //pthread_mutex_lock(&lock_client);
     struct thread_info *tinfo = arg; 
     char *host = tinfo->host;
     int port = tinfo->port ;
@@ -87,14 +86,15 @@ void *client_thread(void *arg) {
     int nb_thread = tinfo->nb_thread;
     printf("Thread number %d opened\n", nb_thread);
     //printf("wclient 1 host %s, port %d, filename %s \n", host, port,filename);
-
+    spin(1);
     int clientfd = open_client_fd_or_die(host, port);
-
+    //pthread_mutex_unlock(&lock_client);
     client_send(clientfd, filename);
     client_print(clientfd);
-    //spin(2);
+    printf("before close or die in client thread \n");
     close_or_die(clientfd);
-    pthread_mutex_unlock(&lock_client);
+    printf("after close or die in client thread \n");
+    
 }
 
 
@@ -121,7 +121,10 @@ int main(int argc, char *argv[]) {
         tinfo.nb_thread=i;
         if(pthread_create(&pool[i], NULL, client_thread, &(tinfo)) != 0 )
             printf("Failed to create client thread\n");
-        pthread_join(pool[i], NULL);        
+               
+    }
+    for( int i=0; i<nb_threads; i++){
+        pthread_join(pool[i], NULL); 
     }
     exit(0);
 }

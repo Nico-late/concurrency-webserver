@@ -22,21 +22,14 @@ int get_fd () {
 	shared.count --;
 	int fd = shared.buff[shared.count];
 	if (shared.count == 0) {
-		printf("buffer empty\n");
 		pthread_cond_signal(&needToFill);
-	}
-	else {
-		pthread_cond_signal(&needToEmpty);
 	}
 	return fd;
 }
 void put_fd (int fd) {
 	shared.buff[shared.count]=fd;
 	shared.count ++;
-	if (shared.count == shared.buff_size) {
-		printf("buffer full\n");
-		pthread_cond_signal(&needToEmpty);
-	}
+
 	pthread_cond_signal(&needToEmpty);
 	
 }
@@ -44,26 +37,25 @@ void put_fd (int fd) {
 void *worker_thread_consumer(void *arg) {
 	while (1){
 		int nb = *((int *)arg);
-		printf("inside worker thread number %d",nb);
+		//printf("inside worker thread number %d \n",nb);
 		pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
 		pthread_cond_wait (&needToEmpty, &lock);
 		int fd = get_fd();
 		request_handle(fd);
-		spin(2);
 		close_or_die(fd);
+
 		pthread_mutex_unlock(&lock);
+		
 	}
 }
 
-void master_thread_producer (void * arg) {
-	int fd = *((int *)arg);
-	pthread_mutex_lock(&master_lock);
+void master_thread_producer (int fd) {
+	pthread_mutex_lock(&lock);
 	while (shared.count == shared.buff_size) {
-		printf("buffer full master");
 		pthread_cond_wait(&needToFill, &lock);
 	}
 	put_fd(fd);
-	pthread_mutex_unlock(&master_lock);
+	pthread_mutex_unlock(&lock);
 }
 
 /*"""Note that the master thread and the worker threads are in a producer-consumer
@@ -137,7 +129,7 @@ int main(int argc, char *argv[]) {
 		struct sockaddr_in client_addr;
 		int client_len = sizeof(client_addr);
 		int conn_fd = accept_or_die(listen_fd, (sockaddr_t *) &client_addr, (socklen_t *) &client_len);
-		master_thread_producer(&conn_fd);		
+		master_thread_producer(conn_fd);		
 	}
     return 0;
 }
