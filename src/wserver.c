@@ -21,7 +21,7 @@ struct {
 int get_fd () {
 	shared.count --;
 	int fd = shared.buff[shared.count];
-	if (shared.count == 0) {
+	if (shared.count == shared.buff_size-1) {
 		pthread_cond_signal(&needToFill);
 	}
 	return fd;
@@ -35,7 +35,7 @@ void put_fd (int fd) {
 
 void *worker_thread_consumer(void *arg) {
 	while (1){
-		int nb = *((int *)arg);
+		//int nb = *((int *)arg);
 		//printf("inside worker thread number %d \n",nb);
 		pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
 		if (shared.count==0)
@@ -44,14 +44,14 @@ void *worker_thread_consumer(void *arg) {
 		pthread_mutex_unlock(&lock);
 		request_handle(fd);
 		close_or_die(fd);
-		sleep(1);
+		//sleep(1);
 	}
 }
 
 void master_thread_producer (int fd) {
 	pthread_mutex_lock(&lock);
 	while (shared.count == shared.buff_size) {
-		printf("############# BUFFER FULL #############");
+		printf("############# BUFFER FULL #############\n");
 		pthread_cond_wait(&needToFill, &lock);
 	}
 	put_fd(fd);
