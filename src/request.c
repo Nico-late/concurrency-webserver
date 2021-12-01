@@ -153,31 +153,40 @@ int check_constraint_file(char uri[]){
     return 0;
 }
 
+int check_authorized_files(char *uri){
+    char *checker = NULL;
+    char *auth = "/authorized_files";
+    checker = strstr(uri, auth);
+    if(checker == uri)
+    {
+        return 0;
+    }
+    return 1;
+}
+
 // handle a request
 void request_handle(int fd) {
     int is_static;
     struct stat sbuf;
     char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
     char filename[MAXBUF], cgiargs[MAXBUF];
-    
     readline_or_die(fd, buf, MAXBUF);
     sscanf(buf, "%s %s %s", method, uri, version);
     counter++;
     printf("method:%s uri:%s version:%s counter:%d\n", method, uri, version, counter);
-    
     if (strcasecmp(method, "GET")) {
 	request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
 	return;
     }
     request_read_headers(fd);
-    
+
     is_static = request_parse_uri(uri, filename, cgiargs);
     if (stat(filename, &sbuf) < 0) {
 	request_error(fd, filename, "404", "Not found", "server could not find this file");
 	return;
     }
     if (is_static) {
-	if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode) || check_constraint_file(uri)) {
+	if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode) || check_constraint_file(uri) || check_authorized_files(uri)) {
 	    request_error(fd, filename, "403", "Forbidden", "server could not read this file");
 	    return;
 	}

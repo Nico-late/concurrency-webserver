@@ -56,17 +56,6 @@ void master_thread_producer (int fd) {
 	pthread_mutex_unlock(&lock);
 }
 
-/*"""Note that the master thread and the worker threads are in a producer-consumer
-relationship and require that their accesses to the shared buffer be
-synchronized. Specifically, the master thread must block and wait if the
-buffer is full; a worker thread must wait if the buffer is empty. In this
-project, you are required to use condition variables. Note: if your
-implementation performs any busy-waiting (or spin-waiting) instead, you will
-be penalized (i.e., do not do that!)."""*/
-
-//
-// ./wserver [-d <basedir>] [-p <portnum>] [-t <threads>] [-b <buffers>]
-// 
 int main(int argc, char *argv[]) {
     int c;
     char *root_dir = default_root;

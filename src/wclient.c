@@ -121,12 +121,8 @@ int main(int argc, char *argv[]) {
             printf("Failed to create client thread\n");
                
     }
-    printf("Before JOIN\n");
     for( int i=0; i<nb_threads; i++){
-        printf("Before JOIN %d\n",i);
         pthread_join(pool[i], NULL); 
-        printf("After JOIN %d\n",i);
     }
-    printf("After JOIN\n");
     exit(0);
 }
