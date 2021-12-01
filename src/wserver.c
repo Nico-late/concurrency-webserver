@@ -21,16 +21,13 @@ struct {
 int get_fd () {
 	shared.count --;
 	int fd = shared.buff[shared.count];
-	if (shared.count == shared.buff_size-1) {
-		pthread_cond_signal(&needToFill);
-	}
+	pthread_cond_signal(&needToFill);
 	return fd;
 }
 void put_fd (int fd) {
 	shared.buff[shared.count]=fd;
 	shared.count ++;
-	if (shared.count==1)
-		pthread_cond_signal(&needToEmpty);
+	pthread_cond_signal(&needToEmpty);
 }
 
 void *worker_thread_consumer(void *arg) {
@@ -44,7 +41,7 @@ void *worker_thread_consumer(void *arg) {
 		pthread_mutex_unlock(&lock);
 		request_handle(fd);
 		close_or_die(fd);
-		//sleep(1);
+		sleep(1);
 	}
 }
 
