@@ -21,27 +21,28 @@ struct {
 int get_fd () {
 	shared.count --;
 	int fd = shared.buff[shared.count];
-	pthread_cond_signal(&needToFill);
+	//if (shared.count < shared.buff_size)
+		pthread_cond_signal(&needToFill);
 	return fd;
 }
 void put_fd (int fd) {
 	shared.buff[shared.count]=fd;
 	shared.count ++;
-	pthread_cond_signal(&needToEmpty);
+	//if (shared.count>=1)
+		pthread_cond_signal(&needToEmpty);
 }
 
 void *worker_thread_consumer(void *arg) {
 	while (1){
 		//int nb = *((int *)arg);
-		//printf("inside worker thread number %d \n",nb);
 		pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
-		if (shared.count==0)
+		while (shared.count==0)
 			pthread_cond_wait (&needToEmpty, &lock);
 		int fd = get_fd();
 		pthread_mutex_unlock(&lock);
 		request_handle(fd);
 		close_or_die(fd);
-		sleep(1);
+		//sleep(1);
 	}
 }
 
