@@ -6,7 +6,6 @@
 char default_root[] = ".";
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t master_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t needToEmpty = PTHREAD_COND_INITIALIZER;
 pthread_cond_t needToFill = PTHREAD_COND_INITIALIZER;
 
@@ -19,22 +18,22 @@ struct {
 } shared = {0};
 
 int get_fd () {
+	// décrémente count de 1, signal que le buffer n'est pas plein, return fd
 	shared.count --;
 	int fd = shared.buff[shared.count];
-	//if (shared.count < shared.buff_size)
-		pthread_cond_signal(&needToFill);
+	pthread_cond_signal(&needToFill);
 	return fd;
 }
 void put_fd (int fd) {
+	//place fd dans le buffer, incrémente count de 1, signal buffer n'est pas vide
 	shared.buff[shared.count]=fd;
 	shared.count ++;
-	//if (shared.count>=1)
-		pthread_cond_signal(&needToEmpty);
+	pthread_cond_signal(&needToEmpty);
 }
 
 void *worker_thread_consumer(void *arg) {
+	//fonction utilisée par les worker_threads
 	while (1){
-		//int nb = *((int *)arg);
 		pthread_mutex_lock(&lock); //par défaut le thread crée est blocké
 		while (shared.count==0)
 			pthread_cond_wait (&needToEmpty, &lock);
@@ -47,6 +46,7 @@ void *worker_thread_consumer(void *arg) {
 }
 
 void master_thread_producer (int fd) {
+	//fonction appelée à chaque fois qu'une nouvelle requête client est recu
 	pthread_mutex_lock(&lock);
 	while (shared.count == shared.buff_size) {
 		printf("############# BUFFER FULL #############\n");
@@ -92,9 +92,6 @@ int main(int argc, char *argv[]) {
 
     // run out of this directory
     chdir_or_die(root_dir);
-
-	//create buffer
-	//extern int buff[buffers];
 
 	//fill the structure with infos
 	shared.buff = malloc( sizeof(int)*buffers);
