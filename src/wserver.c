@@ -107,7 +107,6 @@ int main(int argc, char *argv[]) {
            printf("Failed to create thread\n");
     }
 
-    // now, get to work
     int listen_fd = open_listen_fd_or_die(port);
 
     while (1) {

@@ -16,9 +16,6 @@ wserver: wserver.o request.o io_helper.o
 wclient: wclient.o io_helper.o
 	$(CC) $(CFLAGS) -o wclient wclient.o io_helper.o -lpthread
 
-#spin.cgi: spin.c
-#	$(CC) $(CFLAGS) -o spin.cgi spin.c
-
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<
 

@@ -7,7 +7,6 @@ struct thread_info { /* Used as argument to client_thread() */
     char *host;
     char *filename;
     int port;
-    int nb_thread;
 };
 
 //
@@ -53,8 +52,7 @@ void *client_thread(void *arg) {
     char *host = tinfo->host;
     int port = tinfo->port ;
     char *filename =  tinfo->filename;
-    int nb_thread = tinfo->nb_thread;
-    printf("Thread number %d opened\n", nb_thread);
+    printf("Thread opened\n");
     int clientfd = open_client_fd_or_die(host, port);
 
     client_send(clientfd, filename);
@@ -84,7 +82,6 @@ int main(int argc, char *argv[]) {
     pthread_t pool[nb_threads];
 
     for( int i=0; i<nb_threads; i++){
-        tinfo.nb_thread=i;
         if(pthread_create(&pool[i], NULL, client_thread, &(tinfo)) != 0 )
             printf("Failed to create client thread\n");
                
